@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Version Watcher Demo</title>
+</head>
+<body>
+    <div style="max-width: 600px; margin: 50px auto; padding: 20px;">
+        <h1>Web Version Watcher Demo</h1>
+        <p>This is a simple demo page showcasing the basic functionality of web-version-watcher.</p>
+        <p>When the page has updates, a notification will appear in the bottom-right corner.</p>
+        <p>Tip: You can modify this file and redeploy to test the update detection feature.</p>
+    </div>
+
+    <script type="module">
+        import VersionWatcher from '../../dist/index.esm.js';
+
+        const watcher = new VersionWatcher({
+            messages: {
+                title: 'New Version Available',
+                message: 'A new version of the page is available',
+                buttonText: 'Refresh Now'
+            },
+            disableInLocalhost: false
+        });
+
+        watcher.start();
+    </script>
+</body>
+</html> 
