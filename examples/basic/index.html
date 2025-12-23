@@ -11,6 +11,9 @@
         <p>This is a simple demo page showcasing the basic functionality of web-version-watcher.</p>
         <p>When the page has updates, a notification will appear in the bottom-right corner.</p>
         <p>Tip: You can modify this file and redeploy to test the update detection feature.</p>
+        <button id="testBtn" style="margin-top: 20px; padding: 10px 20px; background: #225ED1; color: white; border: none; border-radius: 4px; cursor: pointer;">
+            Test Notification
+        </button>
     </div>
 
     <script type="module">
@@ -27,6 +30,11 @@
         });
 
         watcher.start();
+
+        // 添加测试按钮功能
+        document.getElementById('testBtn').addEventListener('click', () => {
+            watcher.show();
+        });
     </script>
 </body>
 </html> 

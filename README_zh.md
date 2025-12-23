@@ -46,6 +46,9 @@ watcher.start();
 
 // 停止监控（如果需要）
 // watcher.stop();
+
+// 手动显示通知（用于测试样式和功能）
+// watcher.show();
 ```
 
 ## 配置选项
@@ -63,6 +66,30 @@ watcher.start();
 | container.style | string | - | 自定义通知容器的样式字符串（会追加到默认样式后） |
 | position | 'top-left' \| 'top-right' \| 'bottom-left' \| 'bottom-right' | 'bottom-right' | 通知显示位置 |
 | closable | boolean | true | 是否显示关闭按钮 |
+| showButton | boolean | true | 是否显示刷新按钮 |
+
+## API 方法
+
+### start()
+开始监控版本更新。
+
+### stop()
+停止监控版本更新。
+
+### show()
+手动显示通知（用于测试）。这个方法可以让你在本地开发时方便地测试通知的样式和功能，无需等待版本检查或修改文件。
+
+```javascript
+const watcher = new VersionWatcher({
+  messages: {
+    title: '测试通知',
+    message: '这是一个测试通知'
+  }
+});
+
+// 立即显示通知，用于测试
+watcher.show();
+```
 
 ## 工作原理
 
@@ -167,12 +194,13 @@ const watcher = new VersionWatcher({
 }
 ```
 
-#### 示例 3：设置通知位置和关闭按钮
+#### 示例 3：设置通知位置和按钮显示
 
 ```javascript
 const watcher = new VersionWatcher({
   position: 'top-right',  // 显示在右上角
-  closable: false         // 隐藏关闭按钮
+  closable: false,        // 隐藏关闭按钮
+  showButton: false       // 隐藏刷新按钮
 });
 ```
 
@@ -253,6 +281,13 @@ http://localhost:3000/examples/basic/
    ```javascript
    const watcher = new VersionWatcher({
      closable: false  // 隐藏关闭按钮
+   });
+   ```
+
+8. **测试刷新按钮配置**：
+   ```javascript
+   const watcher = new VersionWatcher({
+     showButton: false  // 隐藏刷新按钮
    });
    ```
 

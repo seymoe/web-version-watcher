@@ -14,6 +14,7 @@ interface WatcherOptions {
   };
   position?: Position;
   closable?: boolean;
+  showButton?: boolean;
 }
 
 interface NotificationOptions {
@@ -37,6 +38,7 @@ class VersionWatcher {
   private containerStyle?: string;
   private position: Position;
   private closable: boolean;
+  private showButton: boolean;
 
   constructor(options: WatcherOptions = {}) {
     this.checkInterval = options.checkInterval || 60000;
@@ -50,10 +52,11 @@ class VersionWatcher {
     this.containerStyle = options.container?.style;
     this.position = options.position || 'bottom-right';
     this.closable = options.closable ?? true;
+    this.showButton = options.showButton ?? true;
   }
 
   private getPositionStyles(): string {
-    const offset = '20px';
+    const offset = '16px';
     switch (this.position) {
       case 'top-left':
         return `top: ${offset}; left: ${offset};`;
@@ -82,9 +85,9 @@ class VersionWatcher {
       ${this.getPositionStyles()}
       background: var(--wvw-background, white);
       color: var(--wvw-text-color, inherit);
-      border-radius: var(--wvw-border-radius, 4px);
+      border-radius: var(--wvw-border-radius, 8px);
       padding: var(--wvw-padding, 16px);
-      box-shadow: var(--wvw-box-shadow, 0 2px 12px 0 rgba(0,0,0,.1));
+      box-shadow: var(--wvw-box-shadow, 0px 0px 12px rgba(0, 0, 0, 0.12));
       width: var(--wvw-width, 330px);
       z-index: var(--wvw-z-index, 9999);
     `;
@@ -102,6 +105,7 @@ class VersionWatcher {
     title.style.cssText = `
       font-weight: var(--wvw-title-font-weight, bold);
       margin-bottom: var(--wvw-title-margin-bottom, 8px);
+      font-size: var(--wvw-title-font-size, 16px);
       color: var(--wvw-title-color, #333);
     `;
     title.textContent = options.title;
@@ -110,35 +114,40 @@ class VersionWatcher {
     const message = document.createElement('div');
     message.className = 'wvw_message';
     message.style.cssText = `
+      font-size: var(--wvw-message-font-size, 14px);
       color: var(--wvw-message-color, #666);
       margin-bottom: var(--wvw-message-margin-bottom, 12px);
     `;
     message.textContent = options.message;
 
-    // 按钮容器
-    const buttonContainer = document.createElement('div');
-    buttonContainer.className = 'wvw_button-container';
-    buttonContainer.style.cssText = 'text-align: right;';
-
-    // 刷新按钮
-    const button = document.createElement('button');
-    button.className = 'wvw_button';
-    button.style.cssText = `
-      background-color: var(--wvw-button-bg, #225ED1);
-      color: var(--wvw-button-color, white);
-      border: none;
-      padding: var(--wvw-button-padding, 8px 15px);
-      border-radius: var(--wvw-button-border-radius, 3px);
-      cursor: pointer;
-      font-size: var(--wvw-button-font-size, 12px);
-    `;
-    button.textContent = options.buttonText;
-    button.onclick = () => window.location.reload();
-
-    buttonContainer.appendChild(button);
     notification.appendChild(title);
     notification.appendChild(message);
-    notification.appendChild(buttonContainer);
+
+    // 刷新按钮（仅在 showButton 为 true 时显示）
+    if (this.showButton) {
+      // 按钮容器
+      const buttonContainer = document.createElement('div');
+      buttonContainer.className = 'wvw_button-container';
+      buttonContainer.style.cssText = 'text-align: right;';
+
+      // 刷新按钮
+      const button = document.createElement('button');
+      button.className = 'wvw_button';
+      button.style.cssText = `
+        background-color: var(--wvw-button-bg, #225ED1);
+        color: var(--wvw-button-color, white);
+        border: none;
+        padding: var(--wvw-button-padding, 7px 15px);
+        border-radius: var(--wvw-button-border-radius, 4px);
+        cursor: pointer;
+        font-size: var(--wvw-button-font-size, 12px);
+      `;
+      button.textContent = options.buttonText;
+      button.onclick = () => window.location.reload();
+
+      buttonContainer.appendChild(button);
+      notification.appendChild(buttonContainer);
+    }
 
     // 关闭按钮（仅在 closable 为 true 时显示）
     if (this.closable) {
@@ -234,6 +243,23 @@ class VersionWatcher {
     if (this.timer) {
       window.clearTimeout(this.timer);
     }
+  }
+
+  /**
+   * 手动显示通知（用于测试）
+   * 这个方法可以让你在本地开发时方便地测试通知的样式和功能
+   */
+  public show(): void {
+    const notification = this.createNotificationElement({
+      title: this.messages.title,
+      message: this.messages.message,
+      buttonText: this.messages.buttonText,
+      onClose: () => {
+        // 测试模式下关闭后不继续检查
+      }
+    });
+
+    document.body.appendChild(notification);
   }
 }
 

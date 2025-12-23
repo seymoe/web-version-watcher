@@ -46,6 +46,9 @@ watcher.start();
 
 // Stop monitoring (if needed)
 // watcher.stop();
+
+// Manually show notification (for testing styles and functionality)
+// watcher.show();
 ```
 
 ## Configuration Options
@@ -63,6 +66,30 @@ watcher.start();
 | container.style | string | - | Custom style string for notification container (appended to default styles) |
 | position | 'top-left' \| 'top-right' \| 'bottom-left' \| 'bottom-right' | 'bottom-right' | Notification position |
 | closable | boolean | true | Whether to show the close button |
+| showButton | boolean | true | Whether to show the refresh button |
+
+## API Methods
+
+### start()
+Start monitoring for version updates.
+
+### stop()
+Stop monitoring for version updates.
+
+### show()
+Manually show the notification (for testing). This method allows you to easily test the notification styles and functionality during local development without waiting for version checks or modifying files.
+
+```javascript
+const watcher = new VersionWatcher({
+  messages: {
+    title: 'Test Notification',
+    message: 'This is a test notification'
+  }
+});
+
+// Show notification immediately for testing
+watcher.show();
+```
 
 ## How It Works
 
@@ -167,12 +194,13 @@ const watcher = new VersionWatcher({
 }
 ```
 
-#### Example 3: Set Position and Close Button
+#### Example 3: Set Position and Button Display
 
 ```javascript
 const watcher = new VersionWatcher({
   position: 'top-right',  // Display at top-right corner
-  closable: false          // Hide close button
+  closable: false,         // Hide close button
+  showButton: false        // Hide refresh button
 });
 ```
 
@@ -253,6 +281,13 @@ http://localhost:3000/examples/basic/
    ```javascript
    const watcher = new VersionWatcher({
      closable: false  // Hide close button
+   });
+   ```
+
+8. **Testing Refresh Button Configuration**:
+   ```javascript
+   const watcher = new VersionWatcher({
+     showButton: false  // Hide refresh button
    });
    ```
 
