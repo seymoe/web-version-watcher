@@ -1,3 +1,5 @@
+type Position = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
+
 interface WatcherOptions {
   checkInterval?: number;
   messages?: {
@@ -6,6 +8,12 @@ interface WatcherOptions {
     buttonText?: string;
   };
   disableInLocalhost?: boolean;
+  container?: {
+    className?: string;
+    style?: string;
+  };
+  position?: Position;
+  closable?: boolean;
 }
 
 interface NotificationOptions {
@@ -25,6 +33,10 @@ class VersionWatcher {
     buttonText: string;
   };
   private disableInLocalhost: boolean;
+  private containerClassName?: string;
+  private containerStyle?: string;
+  private position: Position;
+  private closable: boolean;
 
   constructor(options: WatcherOptions = {}) {
     this.checkInterval = options.checkInterval || 60000;
@@ -34,68 +46,125 @@ class VersionWatcher {
       buttonText: options.messages?.buttonText ?? 'Refresh'
     };
     this.disableInLocalhost = options.disableInLocalhost ?? true;
+    this.containerClassName = options.container?.className;
+    this.containerStyle = options.container?.style;
+    this.position = options.position || 'bottom-right';
+    this.closable = options.closable ?? true;
+  }
+
+  private getPositionStyles(): string {
+    const offset = '20px';
+    switch (this.position) {
+      case 'top-left':
+        return `top: ${offset}; left: ${offset};`;
+      case 'top-right':
+        return `top: ${offset}; right: ${offset};`;
+      case 'bottom-left':
+        return `bottom: ${offset}; left: ${offset};`;
+      case 'bottom-right':
+      default:
+        return `bottom: ${offset}; right: ${offset};`;
+    }
   }
 
   private createNotificationElement(options: NotificationOptions): HTMLElement {
     const notification = document.createElement('div');
-    notification.style.cssText = `
+    
+    // 设置固定类名
+    notification.className = 'wvw_container';
+    if (this.containerClassName) {
+      notification.className += ` ${this.containerClassName}`;
+    }
+    
+    // 设置容器样式，使用 CSS 变量
+    let containerStyle = `
       position: fixed;
-      bottom: 20px;
-      right: 20px;
-      background: white;
-      border-radius: 4px;
-      padding: 16px;
-      box-shadow: 0 2px 12px 0 rgba(0,0,0,.1);
-      min-width: 300px;
-      z-index: 9999;
+      ${this.getPositionStyles()}
+      background: var(--wvw-background, white);
+      color: var(--wvw-text-color, inherit);
+      border-radius: var(--wvw-border-radius, 4px);
+      padding: var(--wvw-padding, 16px);
+      box-shadow: var(--wvw-box-shadow, 0 2px 12px 0 rgba(0,0,0,.1));
+      width: var(--wvw-width, 330px);
+      z-index: var(--wvw-z-index, 9999);
     `;
+    
+    // 追加自定义样式
+    if (this.containerStyle) {
+      containerStyle += this.containerStyle;
+    }
+    
+    notification.style.cssText = containerStyle;
 
+    // 标题
     const title = document.createElement('div');
-    title.style.cssText = 'font-weight: bold; margin-bottom: 8px;';
+    title.className = 'wvw_title';
+    title.style.cssText = `
+      font-weight: var(--wvw-title-font-weight, bold);
+      margin-bottom: var(--wvw-title-margin-bottom, 8px);
+      color: var(--wvw-title-color, #333);
+    `;
     title.textContent = options.title;
 
+    // 消息
     const message = document.createElement('div');
-    message.style.cssText = 'margin-bottom: 12px;';
+    message.className = 'wvw_message';
+    message.style.cssText = `
+      color: var(--wvw-message-color, #666);
+      margin-bottom: var(--wvw-message-margin-bottom, 12px);
+    `;
     message.textContent = options.message;
 
+    // 按钮容器
     const buttonContainer = document.createElement('div');
+    buttonContainer.className = 'wvw_button-container';
     buttonContainer.style.cssText = 'text-align: right;';
 
+    // 刷新按钮
     const button = document.createElement('button');
+    button.className = 'wvw_button';
     button.style.cssText = `
-      background-color: #409eff;
-      color: white;
+      background-color: var(--wvw-button-bg, #225ED1);
+      color: var(--wvw-button-color, white);
       border: none;
-      padding: 7px 15px;
-      border-radius: 3px;
+      padding: var(--wvw-button-padding, 8px 15px);
+      border-radius: var(--wvw-button-border-radius, 3px);
       cursor: pointer;
-      font-size: 12px;
+      font-size: var(--wvw-button-font-size, 12px);
     `;
     button.textContent = options.buttonText;
     button.onclick = () => window.location.reload();
 
-    const closeButton = document.createElement('span');
-    closeButton.style.cssText = `
-      position: absolute;
-      top: 8px;
-      right: 8px;
-      cursor: pointer;
-      color: #909399;
-      font-size: 16px;
-    `;
-    closeButton.innerHTML = '×';
-    closeButton.onclick = () => {
-      document.body.removeChild(notification);
-      if (options.onClose) {
-        options.onClose();
-      }
-    };
-
     buttonContainer.appendChild(button);
-    notification.appendChild(closeButton);
     notification.appendChild(title);
     notification.appendChild(message);
     notification.appendChild(buttonContainer);
+
+    // 关闭按钮（仅在 closable 为 true 时显示）
+    if (this.closable) {
+      const closeButton = document.createElement('span');
+      closeButton.className = 'wvw_close-button';
+      closeButton.style.cssText = `
+        position: absolute;
+        top: 16px;
+        right: 16px;
+        cursor: pointer;
+        color: var(--wvw-close-color, #909399);
+        width: var(--wvw-close-size, 16px);
+        height: var(--wvw-close-size, 16px);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      `;
+      closeButton.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" style="width: 100%; height: 100%;"><path fill="currentColor" d="M764.288 214.592 512 466.88 259.712 214.592a31.936 31.936 0 0 0-45.12 45.12L466.752 512 214.528 764.224a31.936 31.936 0 1 0 45.12 45.184L512 557.184l252.288 252.288a31.936 31.936 0 0 0 45.12-45.12L557.12 512.064l252.288-252.352a31.936 31.936 0 1 0-45.12-45.184z"></path></svg>';
+      closeButton.onclick = () => {
+        document.body.removeChild(notification);
+        if (options.onClose) {
+          options.onClose();
+        }
+      };
+      notification.appendChild(closeButton);
+    }
 
     return notification;
   }

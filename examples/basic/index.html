@@ -17,12 +17,13 @@
         import VersionWatcher from '../../dist/index.esm.js';
 
         const watcher = new VersionWatcher({
-            messages: {
-                title: 'New Version Available',
-                message: 'A new version of the page is available',
-                buttonText: 'Refresh Now'
-            },
-            disableInLocalhost: false
+          checkInterval: 10000,
+          messages: {
+              title: 'New Version Available',
+              message: 'A new version of the page is available',
+              buttonText: 'Refresh Now'
+          },
+          disableInLocalhost: false
         });
 
         watcher.start();
