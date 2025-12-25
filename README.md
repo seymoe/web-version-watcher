@@ -58,9 +58,10 @@ watcher.start();
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
 | checkInterval | number | 60000 | Check interval in milliseconds |
-| messages.title | string | 'New Version Available' | Notification title |
-| messages.message | string | 'A new version of the application is available.' | Notification message |
-| messages.buttonText | string | 'Refresh' | Refresh button text |
+| messages | object \| function | - | Notification messages configuration, can be an object or a function that returns a messages object (supports dynamic multilingual content) |
+| messages.title | string | 'New Version Available' | Notification title (when messages is an object) |
+| messages.message | string | 'A new version of the application is available.' | Notification message (when messages is an object) |
+| messages.buttonText | string | 'Refresh' | Refresh button text (when messages is an object) |
 | disableInLocalhost | boolean | true | When true, version checks are disabled in localhost environment |
 | container.className | string | - | Custom CSS class name for notification container (appended to default class) |
 | container.style | string | - | Custom style string for notification container (appended to default styles) |
@@ -266,6 +267,29 @@ http://localhost:3000/examples/basic/
        title: 'Custom Title',
        message: 'Custom Message',
        buttonText: 'Custom Button Text'
+     }
+   });
+   ```
+
+   Or use function form (supports dynamic multilingual content):
+   ```javascript
+   const watcher = new VersionWatcher({
+     messages: () => {
+       // Get current language from external source
+       const lang = getCurrentLanguage(); // Your language getter function
+       const i18n = {
+         'zh-CN': {
+           title: '发现新版本',
+           message: '应用有新版本可用',
+           buttonText: '立即刷新'
+         },
+         'en-US': {
+           title: 'New Version Available',
+           message: 'A new version of the application is available.',
+           buttonText: 'Refresh'
+         }
+       };
+       return i18n[lang] || i18n['en-US'];
      }
    });
    ```

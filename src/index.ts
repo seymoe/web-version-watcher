@@ -1,12 +1,18 @@
 type Position = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
 
+type MessagesConfig = {
+  title?: string;
+  message?: string;
+  buttonText?: string;
+} | (() => {
+  title: string;
+  message: string;
+  buttonText: string;
+});
+
 interface WatcherOptions {
   checkInterval?: number;
-  messages?: {
-    title?: string;
-    message?: string;
-    buttonText?: string;
-  };
+  messages?: MessagesConfig;
   disableInLocalhost?: boolean;
   container?: {
     className?: string;
@@ -28,11 +34,7 @@ class VersionWatcher {
   private versionTag: string | null = null;
   private timer: number | undefined;
   private checkInterval: number;
-  private messages: {
-    title: string;
-    message: string;
-    buttonText: string;
-  };
+  private messages: MessagesConfig | undefined;
   private disableInLocalhost: boolean;
   private containerClassName?: string;
   private containerStyle?: string;
@@ -42,17 +44,42 @@ class VersionWatcher {
 
   constructor(options: WatcherOptions = {}) {
     this.checkInterval = options.checkInterval || 60000;
-    this.messages = {
-      title: options.messages?.title ?? 'New Version Available',
-      message: options.messages?.message ?? 'A new version of the application is available.',
-      buttonText: options.messages?.buttonText ?? 'Refresh'
-    };
+    this.messages = options.messages;
     this.disableInLocalhost = options.disableInLocalhost ?? true;
     this.containerClassName = options.container?.className;
     this.containerStyle = options.container?.style;
     this.position = options.position || 'bottom-right';
     this.closable = options.closable ?? true;
     this.showButton = options.showButton ?? true;
+  }
+
+  /**
+   * 获取当前的消息配置
+   * 如果 messages 是函数，则调用它获取动态消息；如果是对象，则返回默认值合并后的对象
+   */
+  private getMessages(): {
+    title: string;
+    message: string;
+    buttonText: string;
+  } {
+    if (typeof this.messages === 'function') {
+      return this.messages();
+    }
+    
+    if (this.messages && typeof this.messages === 'object') {
+      return {
+        title: this.messages.title ?? 'New Version Available',
+        message: this.messages.message ?? 'A new version of the application is available.',
+        buttonText: this.messages.buttonText ?? 'Refresh'
+      };
+    }
+
+    // 默认值
+    return {
+      title: 'New Version Available',
+      message: 'A new version of the application is available.',
+      buttonText: 'Refresh'
+    };
   }
 
   private getPositionStyles(): string {
@@ -191,10 +218,11 @@ class VersionWatcher {
   }
 
   private showNotification(newTag: string): void {
+    const messages = this.getMessages();
     const notification = this.createNotificationElement({
-      title: this.messages.title,
-      message: this.messages.message,
-      buttonText: this.messages.buttonText,
+      title: messages.title,
+      message: messages.message,
+      buttonText: messages.buttonText,
       onClose: () => {
         this.timer = window.setTimeout(() => this.compareTag(), this.checkInterval);
         this.versionTag = newTag;
@@ -250,10 +278,11 @@ class VersionWatcher {
    * 这个方法可以让你在本地开发时方便地测试通知的样式和功能
    */
   public show(): void {
+    const messages = this.getMessages();
     const notification = this.createNotificationElement({
-      title: this.messages.title,
-      message: this.messages.message,
-      buttonText: this.messages.buttonText,
+      title: messages.title,
+      message: messages.message,
+      buttonText: messages.buttonText,
       onClose: () => {
         // 测试模式下关闭后不继续检查
       }

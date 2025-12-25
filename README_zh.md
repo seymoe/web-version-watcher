@@ -58,9 +58,10 @@ watcher.start();
 | 参数 | 类型 | 默认值 | 描述 |
 |------|------|--------|------|
 | checkInterval | number | 60000 | 检查更新的时间间隔（毫秒） |
-| messages.title | string | 'New Version Available' | 通知标题 |
-| messages.message | string | 'A new version of the application is available.' | 通知内容 |
-| messages.buttonText | string | 'Refresh' | 刷新按钮文本 |
+| messages | object \| function | - | 通知消息配置，可以是对象或返回消息对象的函数（支持多语言动态获取） |
+| messages.title | string | 'New Version Available' | 通知标题（当 messages 为对象时） |
+| messages.message | string | 'A new version of the application is available.' | 通知内容（当 messages 为对象时） |
+| messages.buttonText | string | 'Refresh' | 刷新按钮文本（当 messages 为对象时） |
 | disableInLocalhost | boolean | true | 设置为true时，在localhost环境下禁用版本检查 |
 | container.className | string | - | 自定义通知容器的CSS类名（会追加到默认类名后） |
 | container.style | string | - | 自定义通知容器的样式字符串（会追加到默认样式后） |
@@ -266,6 +267,29 @@ http://localhost:3000/examples/basic/
        title: '自定义标题',
        message: '自定义消息',
        buttonText: '自定义按钮文本'
+     }
+   });
+   ```
+
+   或者使用函数形式（支持多语言动态获取）：
+   ```javascript
+   const watcher = new VersionWatcher({
+     messages: () => {
+       // 从外部获取当前语言
+       const lang = getCurrentLanguage(); // 你的语言获取函数
+       const i18n = {
+         'zh-CN': {
+           title: '发现新版本',
+           message: '应用有新版本可用',
+           buttonText: '立即刷新'
+         },
+         'en-US': {
+           title: 'New Version Available',
+           message: 'A new version of the application is available.',
+           buttonText: 'Refresh'
+         }
+       };
+       return i18n[lang] || i18n['en-US'];
      }
    });
    ```
