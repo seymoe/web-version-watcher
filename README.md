@@ -2,7 +2,7 @@
 
 A lightweight utility for automatically detecting and notifying web application updates using ETag/Last-Modified headers.
 
-[简体中文](./README_zh.md) | English
+[简体中文](https://github.com/seymoe/web-version-watcher/blob/master/README_zh.md) | English
 
 ## Features
 
@@ -68,6 +68,7 @@ watcher.start();
 | position | 'top-left' \| 'top-right' \| 'bottom-left' \| 'bottom-right' | 'bottom-right' | Notification position |
 | closable | boolean | true | Whether to show the close button |
 | showButton | boolean | true | Whether to show the refresh button |
+| onUpdate | (newTag: string, currentTag: string \| null) => void | - | Update callback function. If provided, it will be called when an update is detected, and the default UI will not be shown. Users can completely customize UI and behavior in the callback |
 
 ## API Methods
 
@@ -92,9 +93,111 @@ const watcher = new VersionWatcher({
 watcher.show();
 ```
 
+## Completely Custom UI
+
+Through the `onUpdate` callback function, you can completely customize the update notification UI and behavior. When an `onUpdate` callback is provided, the library will no longer display the default UI, but instead call your provided callback function.
+
+### Use Cases
+
+#### 1. Completely Custom UI
+```javascript
+const watcher = new VersionWatcher({
+  onUpdate: (newTag, currentTag) => {
+    // Create custom modal
+    const modal = document.createElement('div');
+    modal.className = 'my-custom-modal';
+    modal.style.cssText = `
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+      z-index: 10000;
+    `;
+    modal.innerHTML = `
+      <h2>New Version Detected</h2>
+      <p>Current version: ${currentTag || 'unknown'}</p>
+      <p>New version: ${newTag}</p>
+      <div style="margin-top: 20px; text-align: right;">
+        <button onclick="window.location.reload()" style="margin-right: 10px;">Update Now</button>
+        <button onclick="this.parentElement.parentElement.remove()">Later</button>
+      </div>
+    `;
+    document.body.appendChild(modal);
+  }
+});
+```
+
+#### 2. Using Third-party UI Library
+```javascript
+import { ElNotification } from 'element-plus';
+// or import { message } from 'antd';
+
+const watcher = new VersionWatcher({
+  onUpdate: (newTag) => {
+    // Using Element Plus
+    ElNotification({
+      title: 'New Version Available',
+      message: 'A new version is available, please refresh the page',
+      type: 'info',
+      duration: 0,
+      onClick: () => window.location.reload()
+    });
+    
+    // Or using Ant Design
+    // message.info('New version available, please refresh', 0, () => {
+    //   window.location.reload();
+    // });
+  }
+});
+```
+
+#### 3. Notification Only, No UI
+```javascript
+const watcher = new VersionWatcher({
+  onUpdate: (newTag) => {
+    // Only log
+    console.log('New version detected:', newTag);
+    
+    // Or send to analytics platform
+    // analytics.track('version_update_detected', { newTag });
+    
+    // Or use browser native notification
+    if ('Notification' in window && Notification.permission === 'granted') {
+      new Notification('New Version Available', {
+        body: 'A new version is available',
+        icon: '/icon.png'
+      });
+    }
+  }
+});
+```
+
+#### 4. Custom Refresh Logic
+```javascript
+const watcher = new VersionWatcher({
+  onUpdate: (newTag) => {
+    if (confirm('New version detected, update now?')) {
+      // Refresh immediately
+      window.location.reload();
+    } else {
+      // Refresh after 5 seconds
+      setTimeout(() => {
+        window.location.reload();
+      }, 5000);
+    }
+  }
+});
+```
+
 ## How It Works
 
-web-version-watcher periodically checks the page's ETag or Last-Modified headers to detect application updates. When an update is detected, it displays a notification at the specified position (default: bottom-right) of the page, allowing users to refresh immediately or postpone the update.
+web-version-watcher periodically checks the page's ETag or Last-Modified headers to detect application updates. When an update is detected:
+- If an `onUpdate` callback is provided, it will be called (default UI will not be shown)
+- If no `onUpdate` callback is provided, it displays a notification at the specified position (default: bottom-right) of the page, allowing users to refresh immediately or postpone the update
 
 ## Style Customization
 
@@ -314,6 +417,54 @@ http://localhost:3000/examples/basic/
      showButton: false  // Hide refresh button
    });
    ```
+
+9. **Completely Custom UI (using onUpdate callback)**:
+   ```javascript
+   const watcher = new VersionWatcher({
+     onUpdate: (newTag, currentTag) => {
+       // Completely custom UI
+       const modal = document.createElement('div');
+       modal.className = 'my-custom-modal';
+       modal.innerHTML = `
+         <h2>New Version Detected</h2>
+         <p>Current version: ${currentTag || 'unknown'}</p>
+         <p>New version: ${newTag}</p>
+         <button onclick="window.location.reload()">Update Now</button>
+         <button onclick="this.parentElement.remove()">Later</button>
+       `;
+       document.body.appendChild(modal);
+     }
+   });
+   ```
+
+10. **Using Third-party UI Library**:
+    ```javascript
+    import { ElNotification } from 'element-plus';
+    
+    const watcher = new VersionWatcher({
+      onUpdate: (newTag) => {
+        ElNotification({
+          title: 'New Version Available',
+          message: 'A new version is available, please refresh the page',
+          type: 'info',
+          duration: 0,
+          onClick: () => window.location.reload()
+        });
+      }
+    });
+    ```
+
+11. **Notification Only, No UI**:
+    ```javascript
+    const watcher = new VersionWatcher({
+      onUpdate: (newTag) => {
+        // Only log, no UI
+        console.log('New version detected:', newTag);
+        // Or send to analytics platform
+        analytics.track('version_update_detected', { newTag });
+      }
+    });
+    ```
 
 3. **Testing Different Intervals**:
    ```javascript

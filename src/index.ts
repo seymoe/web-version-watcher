@@ -21,6 +21,14 @@ interface WatcherOptions {
   position?: Position;
   closable?: boolean;
   showButton?: boolean;
+  /**
+   * 更新回调函数
+   * 如果提供了此函数，检测到更新时会调用它，不再显示默认UI
+   * 用户可以在回调中完全自定义UI和行为
+   * @param newTag 新版本标识
+   * @param currentTag 当前版本标识（可能为null）
+   */
+  onUpdate?: (newTag: string, currentTag: string | null) => void;
 }
 
 interface NotificationOptions {
@@ -41,6 +49,7 @@ class VersionWatcher {
   private position: Position;
   private closable: boolean;
   private showButton: boolean;
+  private onUpdate?: (newTag: string, currentTag: string | null) => void;
 
   constructor(options: WatcherOptions = {}) {
     this.checkInterval = options.checkInterval || 60000;
@@ -51,6 +60,7 @@ class VersionWatcher {
     this.position = options.position || 'bottom-right';
     this.closable = options.closable ?? true;
     this.showButton = options.showButton ?? true;
+    this.onUpdate = options.onUpdate;
   }
 
   /**
@@ -218,6 +228,16 @@ class VersionWatcher {
   }
 
   private showNotification(newTag: string): void {
+    // 如果提供了 onUpdate 回调，只调用回调，不显示默认UI
+    if (this.onUpdate) {
+      this.onUpdate(newTag, this.versionTag);
+      // 更新版本标签，继续监控
+      this.versionTag = newTag;
+      this.timer = window.setTimeout(() => this.compareTag(), this.checkInterval);
+      return;
+    }
+
+    // 否则使用默认UI（保持向后兼容）
     const messages = this.getMessages();
     const notification = this.createNotificationElement({
       title: messages.title,
@@ -278,6 +298,13 @@ class VersionWatcher {
    * 这个方法可以让你在本地开发时方便地测试通知的样式和功能
    */
   public show(): void {
+    // 如果提供了 onUpdate 回调，调用它（用于测试自定义UI）
+    if (this.onUpdate) {
+      this.onUpdate('test-tag', this.versionTag);
+      return;
+    }
+
+    // 否则使用默认UI
     const messages = this.getMessages();
     const notification = this.createNotificationElement({
       title: messages.title,

@@ -68,6 +68,7 @@ watcher.start();
 | position | 'top-left' \| 'top-right' \| 'bottom-left' \| 'bottom-right' | 'bottom-right' | 通知显示位置 |
 | closable | boolean | true | 是否显示关闭按钮 |
 | showButton | boolean | true | 是否显示刷新按钮 |
+| onUpdate | (newTag: string, currentTag: string \| null) => void | - | 更新回调函数。如果提供了此函数，检测到更新时会调用它，不再显示默认UI。用户可以在回调中完全自定义UI和行为 |
 
 ## API 方法
 
@@ -92,9 +93,111 @@ const watcher = new VersionWatcher({
 watcher.show();
 ```
 
+## 完全自定义UI
+
+通过 `onUpdate` 回调函数，你可以完全自定义更新通知的UI和行为。当提供了 `onUpdate` 回调时，库将不再显示默认UI，而是调用你提供的回调函数。
+
+### 使用场景
+
+#### 1. 完全自定义UI
+```javascript
+const watcher = new VersionWatcher({
+  onUpdate: (newTag, currentTag) => {
+    // 创建自定义的模态框
+    const modal = document.createElement('div');
+    modal.className = 'my-custom-modal';
+    modal.style.cssText = `
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+      z-index: 10000;
+    `;
+    modal.innerHTML = `
+      <h2>发现新版本</h2>
+      <p>当前版本: ${currentTag || '未知'}</p>
+      <p>新版本: ${newTag}</p>
+      <div style="margin-top: 20px; text-align: right;">
+        <button onclick="window.location.reload()" style="margin-right: 10px;">立即更新</button>
+        <button onclick="this.parentElement.parentElement.remove()">稍后再说</button>
+      </div>
+    `;
+    document.body.appendChild(modal);
+  }
+});
+```
+
+#### 2. 使用第三方UI库
+```javascript
+import { ElNotification } from 'element-plus';
+// 或 import { message } from 'antd';
+
+const watcher = new VersionWatcher({
+  onUpdate: (newTag) => {
+    // 使用 Element Plus
+    ElNotification({
+      title: '发现新版本',
+      message: '应用有新版本可用，请刷新页面',
+      type: 'info',
+      duration: 0,
+      onClick: () => window.location.reload()
+    });
+    
+    // 或使用 Ant Design
+    // message.info('发现新版本，请刷新页面', 0, () => {
+    //   window.location.reload();
+    // });
+  }
+});
+```
+
+#### 3. 仅通知，无UI
+```javascript
+const watcher = new VersionWatcher({
+  onUpdate: (newTag) => {
+    // 只记录日志
+    console.log('新版本检测到:', newTag);
+    
+    // 或发送到分析平台
+    // analytics.track('version_update_detected', { newTag });
+    
+    // 或使用浏览器原生通知
+    if ('Notification' in window && Notification.permission === 'granted') {
+      new Notification('发现新版本', {
+        body: '应用有新版本可用',
+        icon: '/icon.png'
+      });
+    }
+  }
+});
+```
+
+#### 4. 自定义刷新逻辑
+```javascript
+const watcher = new VersionWatcher({
+  onUpdate: (newTag) => {
+    if (confirm('发现新版本，是否立即更新？')) {
+      // 立即刷新
+      window.location.reload();
+    } else {
+      // 延迟5秒后刷新
+      setTimeout(() => {
+        window.location.reload();
+      }, 5000);
+    }
+  }
+});
+```
+
 ## 工作原理
 
-web-version-watcher 通过定期检查页面的 ETag 或 Last-Modified 头信息来检测应用是否有更新。当检测到更新时，会在页面指定位置（默认右下角）显示一个通知，用户可以选择立即刷新页面或稍后再说。
+web-version-watcher 通过定期检查页面的 ETag 或 Last-Modified 头信息来检测应用是否有更新。当检测到更新时：
+- 如果提供了 `onUpdate` 回调，会调用回调函数（不显示默认UI）
+- 如果没有提供 `onUpdate` 回调，会在页面指定位置（默认右下角）显示一个通知，用户可以选择立即刷新页面或稍后再说
 
 ## 样式自定义
 
@@ -314,6 +417,54 @@ http://localhost:3000/examples/basic/
      showButton: false  // 隐藏刷新按钮
    });
    ```
+
+9. **完全自定义UI（使用 onUpdate 回调）**：
+   ```javascript
+   const watcher = new VersionWatcher({
+     onUpdate: (newTag, currentTag) => {
+       // 完全自定义的UI
+       const modal = document.createElement('div');
+       modal.className = 'my-custom-modal';
+       modal.innerHTML = `
+         <h2>发现新版本</h2>
+         <p>当前版本: ${currentTag || '未知'}</p>
+         <p>新版本: ${newTag}</p>
+         <button onclick="window.location.reload()">立即更新</button>
+         <button onclick="this.parentElement.remove()">稍后再说</button>
+       `;
+       document.body.appendChild(modal);
+     }
+   });
+   ```
+
+10. **使用第三方UI库**：
+    ```javascript
+    import { ElNotification } from 'element-plus';
+    
+    const watcher = new VersionWatcher({
+      onUpdate: (newTag) => {
+        ElNotification({
+          title: '发现新版本',
+          message: '应用有新版本可用，请刷新页面',
+          type: 'info',
+          duration: 0,
+          onClick: () => window.location.reload()
+        });
+      }
+    });
+    ```
+
+11. **仅通知，无UI**：
+    ```javascript
+    const watcher = new VersionWatcher({
+      onUpdate: (newTag) => {
+        // 只记录日志，不显示UI
+        console.log('新版本检测到:', newTag);
+        // 或者发送到分析平台
+        analytics.track('version_update_detected', { newTag });
+      }
+    });
+    ```
 
 3. **测试不同的检查间隔**：
    ```javascript

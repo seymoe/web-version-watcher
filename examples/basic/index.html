@@ -26,7 +26,20 @@
               message: 'A new version of the page is available',
               buttonText: 'Refresh Now'
           },
-          disableInLocalhost: false
+          disableInLocalhost: false,
+          onUpdate: (newTag, currentTag) => {
+            const dom = document.createElement('div');
+            dom.innerHTML = `
+              <h2>New Version Available</h2>
+              <p>Current version: ${currentTag}</p>
+              <p>New version: ${newTag}</p>
+              <button onclick="window.location.reload()">Refresh Now</button>
+            `;
+            document.body.appendChild(dom);
+            setTimeout(() => {
+              dom.remove();
+            }, 3000);
+          }
         });
 
         watcher.start();
