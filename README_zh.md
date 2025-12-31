@@ -69,6 +69,7 @@ watcher.start();
 | closable | boolean | true | 是否显示关闭按钮 |
 | showButton | boolean | true | 是否显示刷新按钮 |
 | onUpdate | (newTag: string, currentTag: string \| null) => void | - | 更新回调函数。如果提供了此函数，检测到更新时会调用它，不再显示默认UI。用户可以在回调中完全自定义UI和行为 |
+| checkUrl | string \| (() => string) | window.location.pathname | 版本检查的请求路径。可以是字符串路径或返回路径的函数 |
 
 ## API 方法
 
@@ -463,6 +464,27 @@ http://localhost:3000/examples/basic/
         // 或者发送到分析平台
         analytics.track('version_update_detected', { newTag });
       }
+    });
+    ```
+
+12. **自定义请求路径**：
+    ```javascript
+    // 使用固定路径
+    const watcher = new VersionWatcher({
+      checkUrl: '/index.html'
+    });
+
+    // 使用函数动态获取路径
+    const watcher = new VersionWatcher({
+      checkUrl: () => {
+        // 可以根据当前路由动态返回路径
+        return window.location.pathname + '?v=' + Date.now();
+      }
+    });
+
+    // 检查特定资源文件
+    const watcher = new VersionWatcher({
+      checkUrl: '/static/app.js'
     });
     ```
 

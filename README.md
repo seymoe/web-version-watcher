@@ -69,6 +69,7 @@ watcher.start();
 | closable | boolean | true | Whether to show the close button |
 | showButton | boolean | true | Whether to show the refresh button |
 | onUpdate | (newTag: string, currentTag: string \| null) => void | - | Update callback function. If provided, it will be called when an update is detected, and the default UI will not be shown. Users can completely customize UI and behavior in the callback |
+| checkUrl | string \| (() => string) | window.location.pathname | Request URL for version checking. Can be a string path or a function that returns a path |
 
 ## API Methods
 
@@ -463,6 +464,27 @@ http://localhost:3000/examples/basic/
         // Or send to analytics platform
         analytics.track('version_update_detected', { newTag });
       }
+    });
+    ```
+
+12. **Custom Request URL**:
+    ```javascript
+    // Use fixed path
+    const watcher = new VersionWatcher({
+      checkUrl: '/index.html'
+    });
+
+    // Use function to dynamically get path
+    const watcher = new VersionWatcher({
+      checkUrl: () => {
+        // Can return path dynamically based on current route
+        return window.location.pathname + '?v=' + Date.now();
+      }
+    });
+
+    // Check specific resource file
+    const watcher = new VersionWatcher({
+      checkUrl: '/static/app.js'
     });
     ```
 

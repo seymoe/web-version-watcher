@@ -29,6 +29,12 @@ interface WatcherOptions {
    * @param currentTag 当前版本标识（可能为null）
    */
   onUpdate?: (newTag: string, currentTag: string | null) => void;
+  /**
+   * 版本检查的请求路径
+   * 可以是字符串路径或返回路径的函数
+   * 默认为 window.location.pathname
+   */
+  checkUrl?: string | (() => string);
 }
 
 interface NotificationOptions {
@@ -50,6 +56,7 @@ class VersionWatcher {
   private closable: boolean;
   private showButton: boolean;
   private onUpdate?: (newTag: string, currentTag: string | null) => void;
+  private checkUrl?: string | (() => string);
 
   constructor(options: WatcherOptions = {}) {
     this.checkInterval = options.checkInterval || 60000;
@@ -61,6 +68,7 @@ class VersionWatcher {
     this.closable = options.closable ?? true;
     this.showButton = options.showButton ?? true;
     this.onUpdate = options.onUpdate;
+    this.checkUrl = options.checkUrl;
   }
 
   /**
@@ -128,7 +136,7 @@ class VersionWatcher {
       width: var(--wvw-width, 330px);
       z-index: var(--wvw-z-index, 9999);
     `;
-    
+
     // 追加自定义样式
     if (this.containerStyle) {
       containerStyle += this.containerStyle;
@@ -163,24 +171,24 @@ class VersionWatcher {
     // 刷新按钮（仅在 showButton 为 true 时显示）
     if (this.showButton) {
       // 按钮容器
-      const buttonContainer = document.createElement('div');
+    const buttonContainer = document.createElement('div');
       buttonContainer.className = 'wvw_button-container';
-      buttonContainer.style.cssText = 'text-align: right;';
+    buttonContainer.style.cssText = 'text-align: right;';
 
       // 刷新按钮
-      const button = document.createElement('button');
+    const button = document.createElement('button');
       button.className = 'wvw_button';
-      button.style.cssText = `
+    button.style.cssText = `
         background-color: var(--wvw-button-bg, #225ED1);
         color: var(--wvw-button-color, white);
-        border: none;
+      border: none;
         padding: var(--wvw-button-padding, 7px 15px);
         border-radius: var(--wvw-button-border-radius, 4px);
-        cursor: pointer;
+      cursor: pointer;
         font-size: var(--wvw-button-font-size, 12px);
-      `;
-      button.textContent = options.buttonText;
-      button.onclick = () => window.location.reload();
+    `;
+    button.textContent = options.buttonText;
+    button.onclick = () => window.location.reload();
 
       buttonContainer.appendChild(button);
       notification.appendChild(buttonContainer);
@@ -188,28 +196,28 @@ class VersionWatcher {
 
     // 关闭按钮（仅在 closable 为 true 时显示）
     if (this.closable) {
-      const closeButton = document.createElement('span');
+    const closeButton = document.createElement('span');
       closeButton.className = 'wvw_close-button';
-      closeButton.style.cssText = `
-        position: absolute;
+    closeButton.style.cssText = `
+      position: absolute;
         top: 16px;
         right: 16px;
-        cursor: pointer;
+      cursor: pointer;
         color: var(--wvw-close-color, #909399);
         width: var(--wvw-close-size, 16px);
         height: var(--wvw-close-size, 16px);
         display: inline-flex;
         align-items: center;
         justify-content: center;
-      `;
+    `;
       closeButton.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" style="width: 100%; height: 100%;"><path fill="currentColor" d="M764.288 214.592 512 466.88 259.712 214.592a31.936 31.936 0 0 0-45.12 45.12L466.752 512 214.528 764.224a31.936 31.936 0 1 0 45.12 45.184L512 557.184l252.288 252.288a31.936 31.936 0 0 0 45.12-45.12L557.12 512.064l252.288-252.352a31.936 31.936 0 1 0-45.12-45.184z"></path></svg>';
-      closeButton.onclick = () => {
-        document.body.removeChild(notification);
-        if (options.onClose) {
-          options.onClose();
-        }
-      };
-      notification.appendChild(closeButton);
+    closeButton.onclick = () => {
+      document.body.removeChild(notification);
+      if (options.onClose) {
+        options.onClose();
+      }
+    };
+    notification.appendChild(closeButton);
     }
 
     return notification;
@@ -217,8 +225,16 @@ class VersionWatcher {
 
   private async getVersionTag(): Promise<string | null> {
     try {
-      const response = await fetch(window.location.pathname, {
-        cache: 'no-cache',
+      // 获取请求路径：如果提供了 checkUrl，使用它；否则使用默认的 pathname
+      let url: string;
+      if (this.checkUrl) {
+        url = typeof this.checkUrl === 'function' ? this.checkUrl() : this.checkUrl;
+      } else {
+        url = window.location.pathname;
+      }
+
+      const response = await fetch(url, {
+        cache: 'no-cache'
       });
       return response.headers.get('etag') || response.headers.get('last-modified');
     } catch (error) {
